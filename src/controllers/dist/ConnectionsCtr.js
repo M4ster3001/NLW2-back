@@ -36,33 +36,41 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
-exports.down = exports.up = void 0;
-function up(knex) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, knex.schema.createTable('class_schedule', function (table) {
-                    table.increments('id').primary();
-                    table.integer('week_day').notNullable();
-                    table.integer('from').notNullable();
-                    table.integer('to').notNullable();
-                    table.integer('class_id')
-                        .notNullable()
-                        .references('id')
-                        .inTable('classes')
-                        .onUpdate('CASCADE')
-                        .onDelete('CASCADE');
-                    table.timestamp('created_at')
-                        .defaultTo(knex.raw('CURRENT_TIMESTAMP'));
-                })];
+var connection_1 = require("../database/connection");
+var ConnectionsCtr = /** @class */ (function () {
+    function ConnectionsCtr() {
+    }
+    ConnectionsCtr.prototype.index = function (req, res) {
+        return __awaiter(this, void 0, void 0, function () {
+            var totalConnections, total;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, connection_1["default"]('connections').count('* as total')];
+                    case 1:
+                        totalConnections = _a.sent();
+                        total = totalConnections[0].total;
+                        return [2 /*return*/, res.json({ total: total })];
+                }
+            });
         });
-    });
-}
-exports.up = up;
-function down(knex) {
-    return __awaiter(this, void 0, void 0, function () {
-        return __generator(this, function (_a) {
-            return [2 /*return*/, knex.schema.dropTable('class_schedule')];
+    };
+    ConnectionsCtr.prototype.create = function (req, res) {
+        return __awaiter(this, void 0, void 0, function () {
+            var user_id;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        user_id = req.body.user_id;
+                        return [4 /*yield*/, connection_1["default"]('connections').insert({
+                                user_id: user_id
+                            })];
+                    case 1:
+                        _a.sent();
+                        return [2 /*return*/, res.status(201).send()];
+                }
+            });
         });
-    });
-}
-exports.down = down;
+    };
+    return ConnectionsCtr;
+}());
+exports["default"] = ConnectionsCtr;

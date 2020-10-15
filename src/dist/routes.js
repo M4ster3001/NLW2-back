@@ -2,7 +2,12 @@
 exports.__esModule = true;
 var express_1 = require("express");
 var ClassesCtr_1 = require("./controllers/ClassesCtr");
+var ConnectionsCtr_1 = require("./controllers/ConnectionsCtr");
 var routes = express_1["default"].Router();
 var classesCtr = new ClassesCtr_1["default"]();
+var connCtr = new ConnectionsCtr_1["default"]();
+routes.get('/classes', classesCtr.index);
 routes.post('/classes', classesCtr.create);
+routes.get('/connections', connCtr.index);
+routes.post('/connections', connCtr.create);
 exports["default"] = routes;

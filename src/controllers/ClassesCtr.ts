@@ -1,6 +1,6 @@
-import { Request, Response } from 'express'
-import db from '../database/connection'
-import convertHoutToMinutes from '../utils/convertHourToMinutes'
+import { Request, Response } from 'express';
+import db from '../database/connection';
+import convertHoutToMinutes from '../utils/convertHourToMinutes';
 
 interface ScheduleItem {
     week_day: number;
@@ -18,30 +18,45 @@ export default class ClassesCtr {
 
     async index( req: Request, res: Response ) {
 
-        const filters:Filters = req.query
+        const {subject="", week_day="", time=""}: Filters = req.query;
 
-        if( !filters.subject || !filters.week_day || !filters.time ) {
+        const timeinMinutes = convertHoutToMinutes(time)
+        
+        try {
+            let classes = ""
+            
+            if( subject && week_day && time) {
 
-            return res.status( 400 ).json({ error: 'Missing filter classes' })
+                classes = await db('classes')
+                .whereExists( function() {
+                    this.select('class_schedule.*')
+                    .from('class_schedule')
+                    .whereRaw('`class_schedule`.`class_id` = `classes`.`id`')
+                    .whereRaw('`class_schedule`.`week_day` = ??', [Number(week_day)])
+                    .whereRaw('`class_schedule`.`from` <= ??', [timeinMinutes])
+                    .whereRaw('`class_schedule`.`to` > ??', [timeinMinutes])
+                } )
+                .where( 'classes.subject', '=', subject )
+                .join( 'users', 'classes.user_id', '=', 'users.id' )
+                .select([ 'classes.*', 'users.*' ])
+            } else {
+
+                classes = await db('classes')
+                .whereExists( function() {
+                    this.select('class_schedule.*')
+                    .from('class_schedule')
+                    .whereRaw('`class_schedule`.`class_id` = `classes`.`id`')
+                } )
+                .join( 'users', 'classes.user_id', '=', 'users.id' )
+                .select([ 'classes.*', 'users.*' ])
+            }
+
+            return res.json( classes )
+        }catch( err ) {
+    
+            return res.status( 400 ).json({ error: `Unexpected error while list classes ${err}` })
         }
-
-        const timeinMinutes = convertHoutToMinutes(filters.time)
         
-        const classes = await db('classes')
-            .whereExists( function() {
-                
-                this.select( 'class_schedule.*' )
-                .from( 'class_schedule' )
-                .whereRaw( '`class_schedule`.`class_id` = `classes`.`id`' )
-                .whereRaw( '`class_schedule`.`week_day` = ??`', [Number(filters.week_day)] )
-                .whereRaw( '`class_schedule`.`from` <= ??`', [timeinMinutes] )
-                .whereRaw( '`class_schedule`.`to` > ??`', [timeinMinutes] )
-            } )
-            .where( 'classes.subject', '=', filters.subject )
-            .join( 'users', 'classes_id', '=', 'users.id' )
-            .select([ 'classes.*', 'users.*' ])
-        
-        return res.json( classes )
     }
 
     async create( req: Request, res: Response ) {
@@ -84,7 +99,7 @@ export default class ClassesCtr {
     
             await trx.rollback()
     
-            return res.status( 400 ).json({ error: 'Unexpected error while creating new class' })
+            return res.status( 400 ).json({ error: `Unexpected error while creating new class ${err}` })
         }
     }
 }

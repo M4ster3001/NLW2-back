@@ -47,7 +47,7 @@ function up(knex) {
                     table.string('whatsapp').notNullable();
                     table.string('bio').notNullable();
                     table.timestamp('created_at')
-                        .defaultTo('now()');
+                        .defaultTo(knex.raw('CURRENT_TIMESTAMP'));
                 })];
         });
     });

@@ -50,7 +50,7 @@ function up(knex) {
                         .inTable('users')
                         .onUpdate('CASCADE');
                     table.timestamp('created_at')
-                        .defaultTo('now()');
+                        .defaultTo(knex.raw('CURRENT_TIMESTAMP'));
                 })];
         });
     });
